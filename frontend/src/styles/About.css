@@ -1,0 +1,13 @@
+.about-card {
+  border: 2px solid #2563eb; /* strong blue outline */
+  transition: all 0.25s ease;
+  background: #ffffff;
+}
+
+.about-card:hover {
+  border-color: #1d4ed8;
+  box-shadow:
+    0 0 0 4px rgba(37, 99, 235, 0.25),
+    0 12px 30px rgba(29, 78, 216, 0.25);
+  transform: translateY(-2px);
+}

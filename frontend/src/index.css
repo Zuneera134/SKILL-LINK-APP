@@ -1,0 +1,9 @@
+/* Keep this file minimal now that theme.css handles styling */
+
+body {
+  margin: 0;
+}
+
+a {
+  text-decoration: none;
+}

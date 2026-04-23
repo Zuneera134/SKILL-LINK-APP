@@ -1,0 +1,83 @@
+/* Navbar links default */
+.navbar .nav-link {
+  color: #333;
+  font-weight: 500;
+  transition: color 0.3s, font-weight 0.3s;
+}
+
+/* Hover effect for all links */
+.navbar .nav-link:hover {
+  color: #007bff; /* Blue */
+  font-weight: 600;
+}
+
+/* Active page link (except emergency) */
+.navbar .active-link {
+  color: #007bff; /* Blue */
+  font-weight: 700;
+}
+
+/* Emergency link always red */
+.navbar .emergency-link {
+  color: #dc3545; /* Normal red */
+  font-weight: 600;
+}
+
+/* Hover effect for emergency link */
+.navbar .emergency-link:hover {
+  color: #ff5c5c; /* Slightly brighter red on hover */
+}
+
+/* Active emergency link (same as hover) */
+.navbar .active-emergency {
+  color: #ff5c5c; /* Bright red when active */
+  font-weight: 700;
+}
+
+
+/* About Section */
+
+.about-section {
+  background-color: #d6e6f9; 
+  color: #333;
+}
+
+.about-section h2 {
+  font-weight: 700;
+  font-family: 'Segoe UI', sans-serif;
+  color: #222;
+}
+
+.about-section p {
+  font-family: 'Segoe UI', sans-serif;
+  color: #555;
+}
+
+.feature-card {
+  background: #ffffff;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Footer */
+.footer a:hover {
+  text-decoration: underline;
+  color: #fbf4f3;
+}
+
+.footer h6 {
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.footer p {
+  font-size: 14px;
+  color: #777;
+}
+
+.footer hr {
+  border-color: #ddd;
+}

@@ -1,0 +1,97 @@
+/* ===== Skill Link Navbar Theme (no pills) ===== */
+
+.skill-navbar {
+  height: 78px;
+  padding: 10px 0;
+  border-bottom: 1px solid #bfdbfe;
+}
+
+.nav-logo {
+  height: 78px;
+  width: 78px;
+  object-fit: contain;
+}
+
+/* Base links */
+.nav-item-link {
+  color: #1e3a8a !important; /* blue */
+  font-weight: 700;
+  padding: 8px 10px !important;
+  transition: color 0.18s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Icons default */
+.nav-item-link i {
+  color: #1e3a8a;
+  transition: color 0.18s ease-in-out;
+}
+
+/* Hover: slightly brighter blue */
+.nav-item-link:hover {
+  color: #2563eb !important;
+}
+
+.nav-item-link:hover i {
+  color: #2563eb !important;
+}
+
+/* Active: darker strong blue */
+.active-link {
+  color: #1d4ed8 !important;
+}
+
+.active-link i {
+  color: #1d4ed8 !important;
+}
+
+/* Emergency always red */
+.emergency-link {
+  color: #dc2626 !important;
+  font-weight: 800;
+}
+
+.emergency-link i {
+  color: #dc2626 !important;
+}
+
+/* Emergency hover: brighter red */
+.emergency-link:hover {
+  color: #ef4444 !important;
+}
+
+.emergency-link:hover i {
+  color: #ef4444 !important;
+}
+
+/* Emergency active: deeper red */
+.active-emergency {
+  color: #b91c1c !important;
+}
+
+.active-emergency i {
+  color: #b91c1c !important;
+}
+
+/* Buttons */
+.nav-btn {
+  border-radius: 12px !important;
+  padding: 8px 14px !important;
+  font-weight: 700 !important;
+  transition: 0.18s ease;
+}
+
+.nav-btn.primary {
+  background: #2563eb !important;
+  border: none !important;
+}
+
+.nav-btn.primary:hover {
+  background: #1d4ed8 !important;
+}
+
+.nav-btn:hover {
+  transform: translateY(-1px);
+}

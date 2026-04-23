@@ -1,0 +1,72 @@
+/* ✅ remove side gaps (Bootstrap container padding) */
+.emergency-wrap {
+  width: 100%;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* ✅ full width emergency box (no side gaps) */
+.emergency-box {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  background-color: #d32f2f; /* Deep emergency red */
+  box-shadow: 0 0 20px rgba(211, 47, 47, 0.8);
+  animation: pulse 2s infinite ease-in-out;
+  z-index: 0;
+
+  /* Optional: if you want true edge-to-edge look, keep this.
+     If you want rounded corners, remove this line. */
+  border-radius: 0 !important;
+}
+
+/* Pulsing glow animation */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 15px rgba(211, 47, 47, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(211, 47, 47, 0.9);
+  }
+  100% {
+    box-shadow: 0 0 15px rgba(211, 47, 47, 0.5);
+  }
+}
+
+/* Professional diagonal light streak overlay */
+.light-overlay {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  animation: moveLight 5s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Smooth diagonal movement */
+@keyframes moveLight {
+  0% {
+    transform: translateX(-100%) translateY(-100%) rotate(20deg);
+  }
+  100% {
+    transform: translateX(100%) translateY(100%) rotate(20deg);
+  }
+}
+
+/* Ensure text and button appear above overlay */
+.emergency-box h2,
+.emergency-box p,
+.emergency-box button {
+  position: relative;
+  z-index: 2;
+}

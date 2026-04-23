@@ -1,0 +1,52 @@
+.slider-container {
+  width: 100%;
+  overflow: hidden;
+  padding: 20px 0;
+  background-color: #f8f8f8;
+}
+
+.slider {
+  display: flex;
+  animation: slide 20s linear infinite;
+}
+
+.slider-card {
+  min-width: 200px;
+  flex: 0 0 auto;   /* ensures cards don’t shrink and stay next to each other*/ 
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  text-align: center;
+  margin-right: 20px;
+  transition: transform 0.3s;
+  padding-bottom: 10px;
+}
+
+.slider-card img {
+  width: 100%;
+  height: 200px; 
+  object-fit: cover;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+.slider-card h3 {
+  margin: 10px 0;
+  color: #1a73e8;
+  font-size: 1.1rem;
+}
+
+/* Hover effect */
+.slider-card:hover {
+   transform: translateY(-10px); /* transform animates smoothly instead of jumping.moves the element vertically by -10px (negative = up). */
+}
+
+/* Infinite scrolling animation */
+@keyframes slide {
+  0% { 
+    transform: translateX(0);  /* translateX is a CSS property that moves an element horizontally. */
+  }
+  100% {   /*animation ends*/
+    transform: translateX(-50%);  /*slide the whole row left by half its width, making the next cards appear.*/
+  }
+}

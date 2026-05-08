@@ -200,12 +200,6 @@ This project enhanced our understanding of:
 
 ---
 
-# Team Members
-
-* Zura Tariq
-* Zahra Shah
-
----
 
 # Future Improvements
 

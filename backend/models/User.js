@@ -19,6 +19,12 @@ const userSchema = new mongoose.Schema(
     age: { type: Number, default: null },
     experience: { type: String, default: "" },
     avatarUrl: { type: String, default: "" },
+
+    avgRating: { type: Number, default: 0 },
+    totalReviews: { type: Number, default: 0 },
+
+    lat: { type: Number, default: null },
+    lng: { type: Number, default: null },
   },
   { timestamps: true }
 );

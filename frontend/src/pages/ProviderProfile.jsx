@@ -101,8 +101,9 @@ export default function ProviderProfile() {
         <div className="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
           <div className="d-flex align-items-center gap-3">
             <img
-              src={provider.avatarUrl || "https://via.placeholder.com/90"}
+              src={provider.avatarUrl || "https://randomuser.me/api/portraits/men/32.jpg"}
               alt={provider.name}
+              onError={(e) => (e.currentTarget.src = "https://randomuser.me/api/portraits/men/32.jpg")}
               style={{
                 width: 90,
                 height: 90,

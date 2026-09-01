@@ -1,5 +1,12 @@
 const jwt = require("jsonwebtoken");
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
 const User = require("../models/User");
+const cloudinary = require("../utils/cloudinary");
+
+const UPLOAD_DIR = path.join(__dirname, "..", "uploads");
+const SERVER_URL = process.env.SERVER_URL || "http://localhost:7000";
 
 // helper
 const signToken = (user) => {
@@ -9,6 +16,64 @@ const signToken = (user) => {
     { expiresIn: "7d" }
   );
 };
+
+// True only when real Cloudinary keys exist in .env
+function cloudConfigured() {
+  return !!(
+    process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET
+  );
+}
+
+// Save an uploaded avatar buffer.
+// - When Cloudinary keys are configured, uploads go to Cloudinary (secure CDN URL).
+// - Otherwise (no keys) we fall back to a local file in backend/uploads/.
+// Returns an absolute URL, or "" when there is no upload / on any error.
+function saveAvatarImage(file) {
+  return new Promise((resolve) => {
+    if (!file || !file.buffer || !file.mimetype) return resolve("");
+
+    // Local fallback: write to uploads/ folder.
+    const saveLocal = () => {
+      try {
+        const extMap = {
+          "image/jpeg": "jpg",
+          "image/jpg": "jpg",
+          "image/png": "png",
+          "image/webp": "webp",
+          "image/jfif": "jpg",
+        };
+        const ext = extMap[file.mimetype] || "jpg";
+        const fname = `${Date.now()}_${crypto.randomBytes(6).toString("hex")}.${ext}`;
+        fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+        fs.writeFileSync(path.join(UPLOAD_DIR, fname), file.buffer);
+        resolve(`${SERVER_URL}/uploads/${fname}`);
+      } catch (e) {
+        console.error("AVATAR LOCAL SAVE ERROR:", e.message);
+        resolve("");
+      }
+    };
+
+    // Cloudinary primary path (only when keys are configured).
+    if (cloudConfigured()) {
+      cloudinary.uploader
+        .upload_stream(
+          { folder: "skilllink", resource_type: "image" },
+          (err, result) => {
+            if (err || !result || !result.secure_url) {
+              console.error("CLOUDINARY UPLOAD ERROR:", err?.message);
+              return saveLocal();
+            }
+            resolve(result.secure_url);
+          }
+        )
+        .end(file.buffer);
+    } else {
+      saveLocal();
+    }
+  });
+}
 
 exports.register = async (req, res) => {
   try {
@@ -25,6 +90,8 @@ exports.register = async (req, res) => {
       age,
       experience,
       avatarUrl, 
+      lat,
+      lng,
     } = req.body;
 
     if (!name || !email || !password) {
@@ -35,6 +102,8 @@ exports.register = async (req, res) => {
     if (exists) return res.status(409).json({ message: "Email already exists" });
 
     const finalRole = role === "serviceProvider" ? "serviceProvider" : "client";
+
+    const avatarSaved = await saveAvatarImage(req.file);
 
     const user = await User.create({
       name: String(name).trim(),
@@ -52,7 +121,10 @@ exports.register = async (req, res) => {
       phone: phone || "",
       age: age ? Number(age) : null,
       experience: experience || "",
-      avatarUrl: avatarUrl || "",
+      avatarUrl: avatarSaved || avatarUrl || "",
+
+      lat: lat != null ? Number(lat) : null,
+      lng: lng != null ? Number(lng) : null,
 
     
       approved: finalRole === "serviceProvider" ? false : true,

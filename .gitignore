@@ -1,1 +1,27 @@
+# --- Secrets ---
 .env
+.env.*
+!.env.example
+
+# --- Dependencies ---
+node_modules/
+*/node_modules/
+
+# --- Build output ---
+/build
+/dist
+
+# --- Logs ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Runtime / uploads (user files, not source) ---
+backend/uploads/
+
+# --- OS / editors ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

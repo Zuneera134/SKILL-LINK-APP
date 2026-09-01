@@ -4,6 +4,10 @@ import api from "../api";
 import "./Emergency.css";
 import MapSection from "../components/MapSection";
 
+const SERVICES = ["Electrician", "Plumber", "Carpenter", "Technician", "Painter"];
+
+const LAT_LNG_RE = /^[-+]?\d{1,2}\.\d+\s*,\s*[-+]?\d{1,3}\.\d+$/;
+
 export default function Emergency() {
   const nav = useNavigate();
   const token = useMemo(() => localStorage.getItem("token"), []);
@@ -17,18 +21,23 @@ export default function Emergency() {
 
   const [booking, setBooking] = useState(null);
 
-  // ✅ NEW: map query that follows address input
+  const [coords, setCoords] = useState(null);
+  const [locLabel, setLocLabel] = useState("");
+  const [locating, setLocating] = useState(false);
   const [mapQuery, setMapQuery] = useState("Pakistan");
 
   const [toast, setToast] = useState({ show: false, type: "success", msg: "" });
   const showToast = (type, msg) => {
     setToast({ show: true, type, msg });
-    setTimeout(() => setToast((t) => ({ ...t, show: false })), 2800);
+    setTimeout(() => setToast((t) => ({ ...t, show: false })), 3000);
   };
 
   const phoneToDigits = (p) => String(p || "").replace(/[^\d+]/g, "");
-  const mapsSearchLink = (addr) =>
-    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr || "")}`;
+  const coordsStr = coords ? `${coords.lat},${coords.lng}` : "";
+  const mapsSearchLink = (q) =>
+    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q || "Pakistan")}`;
+  const directionsLink = (q) =>
+    `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(q || "Pakistan")}`;
 
   const loadSuggestedProvider = async () => {
     try {
@@ -48,19 +57,37 @@ export default function Emergency() {
     // eslint-disable-next-line
   }, [service]);
 
-  // ✅ NEW: debounce typed address -> update mapQuery
+  const reverseGeocode = async (lat, lng) => {
+    try {
+      const r = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
+      );
+      const data = await r.json();
+      return data?.display_name || "";
+    } catch {
+      return "";
+    }
+  };
+
   useEffect(() => {
     const v = String(address || "").trim();
-
     const t = setTimeout(() => {
-      if (!v) setMapQuery("Pakistan");
-      else setMapQuery(v);
+      if (LAT_LNG_RE.test(v)) {
+        setMapQuery(v);
+      } else if (!v) {
+        setMapQuery("Pakistan");
+      } else {
+        setMapQuery(v);
+      }
     }, 500);
-
     return () => clearTimeout(t);
   }, [address]);
 
-  // ✅ NEW: if booking happens, map should show booking address
+  useEffect(() => {
+    if (coords) setMapQuery(coordsStr);
+    // eslint-disable-next-line
+  }, [coords, coordsStr]);
+
   useEffect(() => {
     if (booking?.address) setMapQuery(booking.address);
   }, [booking]);
@@ -81,30 +108,44 @@ export default function Emergency() {
       showToast("danger", "Geolocation not supported in this browser");
       return;
     }
-
-    showToast("info", "Fetching location...");
+    setLocating(true);
+    showToast("info", "Fetching your location...");
 
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         const lat = pos.coords.latitude.toFixed(6);
         const lng = pos.coords.longitude.toFixed(6);
-
-        // ✅ Keep it clean so MapSection detects coords easily
-        const coords = `${lat},${lng}`;
-
-        setAddress(coords);
-        setMapQuery(coords);
-        showToast("success", "Location added ✅");
+        setCoords({ lat, lng });
+        const label = await reverseGeocode(lat, lng);
+        setLocLabel(label);
+        setAddress(label || `${lat},${lng}`);
+        setMapQuery(`${lat},${lng}`);
+        setLocating(false);
+        showToast("success", "Location locked");
       },
       (err) => {
+        setLocating(false);
         showToast("danger", explainGeoError(err));
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 12000,
-        maximumAge: 0,
-      }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
+  };
+
+  const copyCoords = async () => {
+    if (!coordsStr) return showToast("danger", "No GPS location to copy");
+    try {
+      await navigator.clipboard.writeText(coordsStr);
+      showToast("success", "Coordinates copied");
+    } catch {
+      showToast("danger", "Could not copy");
+    }
+  };
+
+  const onAddressChange = (e) => {
+    const v = e.target.value;
+    setAddress(v);
+    const m = String(v).trim().match(/^([-+]?\d{1,2}\.\d+)\s*,\s*([-+]?\d{1,3}\.\d+)$/);
+    if (m) setCoords({ lat: m[1], lng: m[2] });
   };
 
   const sendEmergency = async () => {
@@ -113,7 +154,6 @@ export default function Emergency() {
       nav("/login");
       return;
     }
-
     if (!address.trim()) return showToast("danger", "Address is required");
 
     try {
@@ -121,13 +161,14 @@ export default function Emergency() {
       const { data } = await api.post("/jobs/emergency", {
         service,
         address: address.trim(),
+        lat: coords?.lat ?? null,
+        lng: coords?.lng ?? null,
+        locationLabel: locLabel || (coords ? coordsStr : ""),
       });
 
       setBooking(data);
-      showToast("success", `✅ Emergency booking created (${data._id})`);
-      // keep address (optional) OR clear it:
-      // setAddress("");
-      setMapQuery(address.trim());
+      showToast("success", `Emergency booking created (${data._id})`);
+      setMapQuery(data.address);
     } catch (err) {
       showToast("danger", err.response?.data?.message || "Emergency request failed");
     } finally {
@@ -136,6 +177,11 @@ export default function Emergency() {
   };
 
   const worker = booking?.workerId;
+  const bookingLocation = booking?.location || {};
+  const bookingCoords =
+    bookingLocation.lat != null && bookingLocation.lng != null
+      ? `${bookingLocation.lat},${bookingLocation.lng}`
+      : "";
 
   return (
     <>
@@ -148,167 +194,184 @@ export default function Emergency() {
         )}
       </div>
 
-      <div className="container mt-5 pt-5">
-        {/* Top hero */}
-        <div className="emg-hero">
-          <div className="emergency-box p-5 rounded text-white">
-            <div className="emg-hero-title">
-              <h1 className="fw-bold mb-2">⚡ Emergency Help</h1>
-              <p className="fs-5 mb-0">Instant connection with nearest approved worker.</p>
-            </div>
+      <div style={{ background: "#f6f8fc", minHeight: "calc(100vh - 90px)" }}>
+        <div className="container py-4">
+        <div className="text-center mb-4 mt-2">
+          <span className="emg-eyebrow">URGENT HELP</span>
+          <h1 className="emg-title">Emergency Help</h1>
+          <p className="emg-subtitle mx-auto">
+            Instant connection with the nearest approved worker using GPS.
+          </p>
+        </div>
 
-            {/* ✅ Fill that blank space nicely */}
-            <p className="mt-3 mb-0 text-white-50" style={{ maxWidth: 900 }}>
-              Use this page for urgent situations like electrical short-circuits, water leakage, AC failure,
-              or any immediate repair. Select the service, enter your exact location (or use GPS), and we’ll
-              assign the nearest approved worker. After confirmation, you can call/WhatsApp and track the
-              address on the map.
-            </p>
+        {!token && (
+          <div className="alert alert-warning emg-login-alert shadow-sm mx-auto">
+            You must be logged in as a <b>Client</b> to send an emergency request.
+            <button className="btn btn-dark btn-sm ms-2" onClick={() => nav("/login")}>
+              Login
+            </button>
+          </div>
+        )}
 
-            {!token && (
-              <div className="alert alert-warning mt-3 mb-0 emg-alert">
-                You must be logged in as a <b>Client</b> to send an emergency request.
-                <button className="btn btn-dark btn-sm ms-2" onClick={() => nav("/login")}>
-                  Login
-                </button>
-              </div>
-            )}
+        <div className="row g-4">
+          {/* Form */}
+          <div className="col-12 col-lg-7">
+            <div className="card emg-panel shadow-sm h-100">
+              <div className="card-body p-4">
+                <div className="d-flex align-items-center gap-2 mb-1">
+                  <span className="emg-siren">⚡</span>
+                  <h4 className="mb-0 fw-bold">Request Emergency</h4>
+                </div>
+                <p className="text-muted mb-3">
+                  Choose a service, lock your location with GPS (or type it), and we'll assign the
+                  nearest approved worker.
+                </p>
 
-            {/* Layout */}
-            <div className="row g-4 mt-4 emg-grid">
-              {/* Form column */}
-              <div className="col-12 col-lg-7">
-                <div className="emg-card glass p-4">
-                  <div className="emg-card-head">
-                    <div className="emg-pill">Fast • Verified • Safe</div>
-                    <h4 className="mb-1 fw-bold">Request Emergency</h4>
-                    <div className="text-white-50">
-                      Choose service + enter address. We’ll assign the nearest approved worker.
-                    </div>
+                <div className="row g-3">
+                  <div className="col-md-4">
+                    <label className="form-label fw-semibold">Service</label>
+                    <select
+                      className="form-select"
+                      value={service}
+                      onChange={(e) => setService(e.target.value)}
+                    >
+                      {SERVICES.map((s) => (
+                        <option key={s}>{s}</option>
+                      ))}
+                    </select>
                   </div>
 
-                  <div className="row g-3 mt-3">
-                    <div className="col-md-4">
-                      <label className="form-label fw-semibold text-white">Service</label>
-                      <select
-                        className="form-select"
-                        value={service}
-                        onChange={(e) => setService(e.target.value)}
+                  <div className="col-md-8">
+                    <label className="form-label fw-semibold">Your Location</label>
+                    <div className="d-flex gap-2">
+                      <input
+                        className="form-control"
+                        placeholder="Type address OR tap GPS"
+                        value={address}
+                        onChange={onAddressChange}
+                      />
+                      <button
+                        className="btn btn-outline-danger emg-locbtn text-nowrap"
+                        type="button"
+                        onClick={useMyLocation}
+                        disabled={locating}
                       >
-                        <option>Electrician</option>
-                        <option>Plumber</option>
-                        <option>Carpenter</option>
-                        <option>Technician</option>
-                        <option>Painter</option>
-                      </select>
+                        {locating ? "Locating..." : "📍 Use GPS"}
+                      </button>
                     </div>
-
-                    <div className="col-md-8">
-                      <label className="form-label fw-semibold text-white">Your Address</label>
-                      <div className="d-flex gap-2">
-                        <input
-                          className="form-control"
-                          placeholder="e.g. COMSATS University Abbottabad Campus, Abbottabad, Pakistan"
-                          value={address}
-                          onChange={(e) => setAddress(e.target.value)}
-                        />
-                        <button
-                          className="btn btn-outline-light emg-locbtn"
-                          type="button"
-                          onClick={useMyLocation}
-                        >
-                          Use GPS
-                        </button>
-                      </div>
-                      <div className="emg-help">
-                        Tip: Type full address (City + Street) OR use GPS. The map below will update automatically.
-                      </div>
+                    <div className="form-text">
+                      Tip: Tap <b>Use GPS</b> to auto-detect your exact position. The map below will
+                      pinpoint it live.
                     </div>
                   </div>
+                </div>
 
-                  <div className="d-flex flex-wrap gap-2 mt-3">
+                {coords && (
+                  <div className="emg-coords p-3 mt-3">
+                    <div className="d-flex flex-wrap align-items-center gap-2">
+                      <span className="badge bg-success">GPS Locked</span>
+                      <code className="emg-code">
+                        {coords.lat}, {coords.lng}
+                      </code>
+                      <button className="btn btn-sm btn-outline-secondary" onClick={copyCoords}>
+                        Copy
+                      </button>
+                      {locLabel && (
+                        <span className="text-muted small ms-1">
+                          <b>Place:</b> {locLabel}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="d-flex flex-wrap gap-2 mt-3">
+                  <a
+                    className="btn btn-outline-secondary btn-sm"
+                    href={mapsSearchLink(coordsStr || address || "Pakistan")}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Open Google Maps
+                  </a>
+                  {coordsStr && (
                     <a
-                      className="btn btn-outline-light btn-sm"
-                      href={mapsSearchLink(address || "Pakistan")}
+                      className="btn btn-outline-secondary btn-sm"
+                      href={directionsLink(coordsStr)}
                       target="_blank"
                       rel="noreferrer"
                     >
-                      Open Google Maps
+                      Directions to me
                     </a>
-                    <span className="badge bg-light text-dark emg-badge">
-                   
-                    </span>
-                    <span className="badge bg-light text-dark emg-badge">
-                    </span>
-                  </div>
-
-                  <button
-                    className="btn btn-light btn-lg mt-4 emg-mainbtn"
-                    onClick={sendEmergency}
-                    disabled={loading}
-                  >
-                    {loading ? "Sending..." : "Get Immediate Help Now"}
-                  </button>
+                  )}
                 </div>
+
+                <button
+                  className="btn btn-danger btn-lg w-100 mt-4 emg-mainbtn"
+                  onClick={sendEmergency}
+                  disabled={loading}
+                >
+                  {loading ? "Sending..." : "Get Immediate Help Now"}
+                </button>
               </div>
+            </div>
+          </div>
 
-              {/* Right column: steps + safety */}
-              <div className="col-12 col-lg-5">
-                <div className="emg-card glass p-4 h-100">
-                  <h5 className="fw-bold mb-3">How it works</h5>
+          {/* How it works */}
+          <div className="col-12 col-lg-5">
+            <div className="card emg-panel shadow-sm h-100">
+              <div className="card-body p-4">
+                <h5 className="fw-bold mb-3">How it works</h5>
 
-                  <div className="emg-step">
-                    <div className="emg-step-num">1</div>
-                    <div>
-                      <div className="fw-bold">Select service</div>
-                      <div className="text-white-50">Electrician, plumber, painter, etc.</div>
-                    </div>
+                <div className="emg-step">
+                  <div className="emg-step-num">1</div>
+                  <div>
+                    <div className="fw-bold">Select service</div>
+                    <div className="text-muted">Electrician, plumber, painter, etc.</div>
                   </div>
+                </div>
 
-                  <div className="emg-step">
-                    <div className="emg-step-num">2</div>
-                    <div>
-                      <div className="fw-bold">Enter address / GPS</div>
-                      <div className="text-white-50">Use GPS or type your location.</div>
-                    </div>
+                <div className="emg-step">
+                  <div className="emg-step-num">2</div>
+                  <div>
+                    <div className="fw-bold">Lock location with GPS</div>
+                    <div className="text-muted">One tap auto-detects your exact position.</div>
                   </div>
+                </div>
 
-                  <div className="emg-step">
-                    <div className="emg-step-num">3</div>
-                    <div>
-                      <div className="fw-bold">Get assigned worker</div>
-                      <div className="text-white-50">Nearest approved provider is selected.</div>
-                    </div>
+                <div className="emg-step">
+                  <div className="emg-step-num">3</div>
+                  <div>
+                    <div className="fw-bold">Get nearest worker</div>
+                    <div className="text-muted">We assign the closest approved provider.</div>
                   </div>
+                </div>
 
-                  <hr className="emg-hr" />
+                <hr className="emg-hr" />
 
-                  <h6 className="fw-bold mb-2">Safety tips</h6>
-                  <ul className="emg-ul">
-                    <li>Verify worker name on confirmation card.</li>
-                    <li>Prefer WhatsApp/Call from inside the app.</li>
-                    <li>Share your location only when needed.</li>
-                  </ul>
+                <h6 className="fw-bold mb-2">Safety tips</h6>
+                <ul className="emg-ul">
+                  <li>Verify worker name on confirmation card.</li>
+                  <li>Prefer WhatsApp/Call from inside the app.</li>
+                  <li>Share your live location only when needed.</li>
+                </ul>
 
-                  <div className="emg-miniStats">
-                    <div className="emg-miniStat">
-                      <div className="emg-miniLabel">Verified Providers</div>
-                      <div className="emg-miniValue">100%</div>
-                    </div>
-                    <div className="emg-miniStat">
-                      <div className="emg-miniLabel">Support</div>
-                      <div className="emg-miniValue">24/7</div>
-                    </div>
-                    <div className="emg-miniStat">
-                      <div className="emg-miniLabel">Tracking</div>
-                      <div className="emg-miniValue">Maps</div>
-                    </div>
+                <div className="emg-miniStats">
+                  <div className="emg-miniStat">
+                    <div className="emg-miniLabel">Verified Providers</div>
+                    <div className="emg-miniValue">100%</div>
+                  </div>
+                  <div className="emg-miniStat">
+                    <div className="emg-miniLabel">Support</div>
+                    <div className="emg-miniValue">24/7</div>
+                  </div>
+                  <div className="emg-miniStat">
+                    <div className="emg-miniLabel">GPS Tracking</div>
+                    <div className="emg-miniValue">Live</div>
                   </div>
                 </div>
               </div>
             </div>
-
-            <div className="light-overlay"></div>
           </div>
         </div>
 
@@ -326,9 +389,10 @@ export default function Emergency() {
             <div className="card emg-providerCard shadow-sm">
               <div className="card-body d-flex flex-column flex-md-row gap-3 align-items-center">
                 <img
-                  src={suggested.avatarUrl || "https://via.placeholder.com/90"}
+                  src={suggested.avatarUrl || "https://randomuser.me/api/portraits/men/32.jpg"}
                   alt="avatar"
                   className="emg-avatar"
+                  onError={(e) => (e.currentTarget.src = "https://randomuser.me/api/portraits/men/32.jpg")}
                 />
 
                 <div className="flex-grow-1">
@@ -352,7 +416,6 @@ export default function Emergency() {
                   >
                     Call Now
                   </a>
-
                   <a
                     className={`btn btn-success ${suggested.phone ? "" : "disabled"}`}
                     href={
@@ -376,12 +439,17 @@ export default function Emergency() {
           <div className="mt-4">
             <h4 className="mb-2">Emergency Confirmed</h4>
 
-            <div className="card shadow-sm">
+            <div className="card shadow-sm border-success">
               <div className="card-body">
                 <div className="d-flex flex-wrap gap-2 mb-3">
                   <span className="badge bg-danger">Status: {booking.status}</span>
                   <span className="badge bg-dark">Booking ID: {booking._id}</span>
                   <span className="badge bg-primary">Service: {booking.service}</span>
+                  {booking.nearestDistKm != null && (
+                    <span className="badge bg-success">
+                      Worker distance: ~{booking.nearestDistKm} km
+                    </span>
+                  )}
                 </div>
 
                 {worker ? (
@@ -396,9 +464,14 @@ export default function Emergency() {
                         <span><b>Rating:</b> {worker.avgRating || 0} ⭐ ({worker.totalReviews || 0})</span>
                       </div>
                       <div className="mt-2"><b>Phone:</b> {worker.phone || "-"}</div>
-                      <div className="mt-2 text-muted small">
-                        Address: {booking.address}
-                      </div>
+
+                      <div className="mt-2 text-muted small">Address: {booking.address}</div>
+                      {bookingCoords && (
+                        <div className="mt-1 text-muted small">
+                          GPS: <code>{bookingCoords}</code>
+                          {bookingLocation.label && <> — {bookingLocation.label}</>}
+                        </div>
+                      )}
                     </div>
 
                     <div className="col-md-4 d-flex flex-column gap-2">
@@ -408,7 +481,6 @@ export default function Emergency() {
                       >
                         Call Worker
                       </a>
-
                       <a
                         className={`btn btn-success ${worker.phone ? "" : "disabled"}`}
                         href={
@@ -421,14 +493,21 @@ export default function Emergency() {
                       >
                         WhatsApp Worker
                       </a>
-
                       <a
                         className="btn btn-primary"
-                        href={mapsSearchLink(booking.address)}
+                        href={mapsSearchLink(bookingCoords || booking.address)}
                         target="_blank"
                         rel="noreferrer"
                       >
                         Track on Map
+                      </a>
+                      <a
+                        className="btn btn-outline-secondary"
+                        href={directionsLink(bookingCoords || booking.address)}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Get Directions
                       </a>
                     </div>
                   </div>
@@ -440,8 +519,11 @@ export default function Emergency() {
           </div>
         )}
 
-        {/* ✅ Map updates based on what user typed/GPS/booking */}
-        <MapSection query={mapQuery} />
+        {/* Live map */}
+        <div className="mt-4">
+          <MapSection query={mapQuery} title="Your Location on Map" />
+        </div>
+        </div>
       </div>
     </>
   );

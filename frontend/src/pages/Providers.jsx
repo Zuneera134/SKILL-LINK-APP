@@ -74,8 +74,9 @@ export default function Providers() {
                 <div className="card-body">
                   <div className="d-flex align-items-center gap-3 mb-2">
                     <img
-                      src={p.avatarUrl || "https://via.placeholder.com/56"}
+                      src={p.avatarUrl || "https://randomuser.me/api/portraits/men/32.jpg"}
                       alt="avatar"
+                      onError={(e) => (e.currentTarget.src = "https://randomuser.me/api/portraits/men/32.jpg")}
                       style={{
                         width: 56,
                         height: 56,

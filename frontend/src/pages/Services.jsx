@@ -116,7 +116,7 @@ export default function Services() {
 
   return (
     <div className="services-page">
-      <div className="container mt-5 pt-5 pb-5">
+      <div className="container pb-5">
         <div className="text-center mb-4">
           <h2 className="fw-bold services-title">Services We Provide</h2>
           <p className="text-muted mb-0">
@@ -173,9 +173,10 @@ export default function Services() {
                     <div className="profile-card">
                       <div className="profile-top">
                         <img
-                          src={p.avatarUrl || "https://via.placeholder.com/64"}
+                          src={p.avatarUrl || "https://randomuser.me/api/portraits/men/32.jpg"}
                           alt={p.name}
                           className="profile-avatar"
+                          onError={(e) => (e.currentTarget.src = "https://randomuser.me/api/portraits/men/32.jpg")}
                         />
                         <div className="profile-name">
                           <h6 className="mb-0 fw-bold">{p.name}</h6>
@@ -204,7 +205,7 @@ export default function Services() {
 
                       <button
                         className="btn btn-primary w-100 mt-3 services-btn"
-                        onClick={() => nav("/login")}
+                        onClick={() => nav(`/provider/${p._id}`)}
                       >
                         Book Now
                       </button>

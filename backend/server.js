@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 const mongoose = require("mongoose");
 
 const authRoutes = require("./routes/authRoutes");
@@ -14,6 +15,9 @@ const app = express();
 
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(express.json());
+
+// Serve uploaded avatar images (public static folder)
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.get("/", (req, res) => res.send("Skill Link API running"));
 

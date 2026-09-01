@@ -25,6 +25,7 @@ export default function Login() {
   };
 
   return (
+    <div style={{ background: "#f6f8fc", minHeight: "calc(100vh - 90px)" }}>
     <div className="container py-5">
       <div className="d-flex justify-content-center">
         <div className="card auth-card shadow p-4 pt-5">
@@ -120,6 +121,7 @@ export default function Login() {
           font-weight:700;
         }
       `}</style>
+    </div>
     </div>
   );
 }

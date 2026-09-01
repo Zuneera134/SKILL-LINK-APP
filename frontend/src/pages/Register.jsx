@@ -96,13 +96,14 @@ export default function Register() {
   };
 
   return (
-    <div className="container py-5">
+    <div style={{ background: "#f6f8fc", minHeight: "calc(100vh - 90px)" }}>
+      <div className="container py-5">
       <div className="row justify-content-center">
         <div className="col-lg-8">
-          <div className="card register-card shadow">
-            <div className="card-body">
+          <div className="card register-card shadow p-4 pt-5">
+            <div className="card-body pt-0">
               {/* ✅ LOGO (NOW CIRCULAR LIKE LOGIN PAGE) */}
-              <div className="text-center mb-3">
+              <div className="text-center mb-3 register-logo-wrapper">
                 <div className="auth-logo-ring">
                   <img className="auth-logo-img" src={logo} alt="Skill Link" />
                 </div>
@@ -360,12 +361,19 @@ export default function Register() {
         .register-card {
           border: 2px solid #3b82f6;
           transition: all 0.3s ease;
+          border-radius:16px;
+          position:relative;
         }
         .register-card:hover {
           border-color: #1e3a8a;
           box-shadow:
             0 0 0 4px rgba(37, 99, 235, 0.18),
             0 16px 34px rgba(0, 0, 0, 0.12);
+        }
+
+        /* ✅ Pull logo upward (half outside card) like LOGIN page */
+        .register-logo-wrapper{
+          margin-top:-88px;
         }
 
         /* ✅ SAME LOOK AS LOGIN LOGO (CIRCULAR) */
@@ -388,6 +396,7 @@ export default function Register() {
           display: block;
         }
       `}</style>
-    </div>
+        </div>
+      </div>
   );
 }

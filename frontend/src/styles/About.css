@@ -1,13 +1,142 @@
+.about-page {
+  background: linear-gradient(180deg, #f0f5ff 0%, #ffffff 40%, #ffffff 100%);
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+/* All About body text uses the site's muted tone for consistency */
+.about-card p,
+.about-card ul.about-list {
+  color: #475569;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.about-card .text-muted {
+  color: #475569 !important;
+}
+
+/* Hero header */
+.about-hero {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+  color: #fff;
+  border-bottom-left-radius: 32px;
+  border-bottom-right-radius: 32px;
+  box-shadow: 0 10px 30px rgba(30, 58, 138, 0.25);
+}
+
+.about-eyebrow {
+  display: inline-block;
+  letter-spacing: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #bcd2ff;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.about-title {
+  font-weight: 900;
+  color: #ffffff;
+  font-size: 2.2rem;
+  margin: 0;
+}
+
+.about-subtitle {
+  max-width: 560px;
+  color: #ffffff;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.about-badge {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+
+/* Cards */
 .about-card {
-  border: 2px solid #2563eb; /* strong blue outline */
-  transition: all 0.25s ease;
+  border: 1px solid #e6edf7;
+  border-left: 5px solid #2563eb;
   background: #ffffff;
+  box-shadow: 0 6px 18px rgba(30, 58, 138, 0.07);
+  transition: all 0.25s ease;
 }
 
 .about-card:hover {
-  border-color: #1d4ed8;
-  box-shadow:
-    0 0 0 4px rgba(37, 99, 235, 0.25),
-    0 12px 30px rgba(29, 78, 216, 0.25);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px rgba(30, 58, 138, 0.14);
+  border-left-color: #1d4ed8;
+}
+
+.about-card-accent {
+  border-left: 5px solid #f59e0b;
+  background: linear-gradient(180deg, #ffffff 0%, #fdf8ef 100%);
+}
+
+.about-card-title {
+  color: #1e3a8a;
+  font-weight: 800;
+  position: relative;
+  padding-bottom: 8px;
+  margin-bottom: 14px;
+}
+
+.about-card-title::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 48px;
+  height: 4px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #2563eb, #60a5fa);
+}
+
+.about-card-accent .about-card-title::after {
+  content: none;
+}
+
+/* Lists */
+.about-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.about-list li {
+  position: relative;
+  padding-left: 22px;
+  margin-bottom: 8px;
+}
+
+.about-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #2563eb;
+}
+
+/* Founders */
+.about-founders {
+  color: #475569;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+.about-founders-name {
+  font-weight: 800;
+  font-size: 1.15rem;
 }

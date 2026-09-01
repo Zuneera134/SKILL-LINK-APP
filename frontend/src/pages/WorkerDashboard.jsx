@@ -35,6 +35,24 @@ export default function WorkerDashboard() {
     return d.toLocaleString();
   };
 
+  // Best location string to navigate to (prefer exact GPS coords, else text address).
+  const jobLocation = (b) => {
+    if (b.lat != null && b.lng != null) return `${b.lat},${b.lng}`;
+    return b.address || "";
+  };
+
+  const directionsLink = (b) => {
+    const dest = jobLocation(b);
+    if (!dest) return "#";
+    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}`;
+  };
+
+  const mapsLink = (b) => {
+    const dest = jobLocation(b);
+    if (!dest) return "#";
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest)}`;
+  };
+
   const extractErrorMessage = (err) => {
     const data = err?.response?.data;
 
@@ -151,12 +169,49 @@ export default function WorkerDashboard() {
                     return (
                       <tr key={b._id}>
                         <td>
-                          <span className="badge bg-secondary">{b.status}</span>
+                          {String(b.status).toLowerCase() === "emergency" ? (
+                            <span className="badge bg-danger">EMERGENCY</span>
+                          ) : (
+                            <span className="badge bg-secondary">{b.status}</span>
+                          )}
                         </td>
 
                         <td>{b.clientId?.name || "-"}</td>
 
-                        <td style={{ maxWidth: 280 }}>{b.address || "-"}</td>
+                        <td style={{ maxWidth: 280 }}>
+                          <div>{b.address || "-"}</div>
+                          {b.lat != null && b.lng != null && (
+                            <div className="text-muted small">
+                              <code>
+                                {b.lat},{b.lng}
+                              </code>
+                            </div>
+                          )}
+                          <div className="mt-1 d-flex gap-2 flex-wrap">
+                            <a
+                              className="btn btn-outline-primary btn-sm"
+                              href={directionsLink(b)}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(e) => {
+                                if (!jobLocation(b)) e.preventDefault();
+                              }}
+                            >
+                              Navigate
+                            </a>
+                            <a
+                              className="btn btn-outline-secondary btn-sm"
+                              href={mapsLink(b)}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(e) => {
+                                if (!jobLocation(b)) e.preventDefault();
+                              }}
+                            >
+                              View on Map
+                            </a>
+                          </div>
+                        </td>
 
                         <td>{formatSchedule(b.schedule)}</td>
 
